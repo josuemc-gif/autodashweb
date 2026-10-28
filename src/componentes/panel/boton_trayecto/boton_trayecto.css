@@ -1,0 +1,3 @@
+.trip-button:hover { transform: translateY(-1px); background: var(--teal-dark); }
+
+.trip-button.trip-active { border-color: #c7705d; background: #c7705d; }

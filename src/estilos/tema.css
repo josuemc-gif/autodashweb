@@ -1,0 +1,87 @@
+.large-text { font-size: 112%; }
+
+.high-contrast { --ink: #10191a; --ink-soft: #36494a; --ink-faint: #5d6d6e; --line: #c8d2d0; --canvas: #f7f9f8; }
+
+.high-contrast .metric-label, .high-contrast .section-kicker, .high-contrast .eyebrow { color: #4c6262; }
+
+.dark-mode { color-scheme: dark; --ink: #e6efeb; --ink-soft: #b5c5bf; --ink-faint: #879a93; --line: #344640; --paper: #1b2925; --canvas: #121a18; --teal: #61bda4; --teal-dark: #80d2b9; --teal-wash: #213c35; }
+
+.dark-mode .sidebar, .dark-mode .panel, .dark-mode .metric-card, .dark-mode .route-search, .dark-mode .device-option, .dark-mode .task-card, .dark-mode .playlist-item { background: var(--paper); }
+
+.dark-mode .topbar { border-color: var(--line); background: rgb(27 41 37 / 95%); }
+
+.dark-mode .nav-link:hover, .dark-mode .subtle-button:hover, .dark-mode .icon-button:hover { background: #263832; }
+
+.dark-mode .nav-link { color: #a1b2ac; }
+
+.dark-mode .nav-link.active { color: var(--teal-dark); }
+
+.dark-mode .vehicle-connect, .dark-mode .device-illustration, .dark-mode .connect-icon { border-color: var(--line); background: #22332e; color: #afc5bc; }
+
+.dark-mode .metric-icon, .dark-mode .setting-icon, .dark-mode .empty-icon, .dark-mode .trip-row-icon, .dark-mode .playlist-number { background: #243631; color: #99bcad; }
+
+.dark-mode .battery-color, .dark-mode .weather-title-icon, .dark-mode .weather-symbol { background: #40382a; color: #e3b26b; }
+
+.dark-mode .battery-track, .dark-mode .speed-meter, .dark-mode .audio-progress { background: #34443e; }
+
+.dark-mode .source-tag, .dark-mode .column-count { background: #2c3b36; color: #aab8b3; }
+
+.dark-mode .map-preview-art { border-color: var(--line); background-color: #26352f; background-image: linear-gradient(30deg, transparent 46%, #34433b 47%, #34433b 49%, transparent 50%), linear-gradient(148deg, transparent 52%, #34443c 53%, #34443c 55%, transparent 56%), linear-gradient(90deg, rgb(113 133 122 / 15%) 1px, transparent 1px), linear-gradient(rgb(113 133 122 / 15%) 1px, transparent 1px); }
+
+.dark-mode .map-grid-lines { background: radial-gradient(ellipse at 78% 20%, #2d3b32 0, #2d3b32 14%, transparent 14.5%), radial-gradient(ellipse at 22% 83%, #2b3931 0, #2b3931 16%, transparent 16.5%); }
+
+.dark-mode .map-route { background: #64766c; box-shadow: 0 0 0 1px #34433b; }
+
+.dark-mode .map-coordinates, .dark-mode .map-notice, .dark-mode .route-error, .dark-mode .route-loading, .dark-mode .route-summary { border-color: var(--line); background: rgb(27 41 37 / 96%); color: var(--ink-soft); }
+
+.dark-mode .destination-field input { background: transparent; color: var(--ink); }
+
+.dark-mode .destination-field input::placeholder { color: #94a59d; }
+
+.dark-mode .suggestion-option:hover, .dark-mode .suggestion-option.highlighted { background: #29463d; }
+
+.dark-mode .kanban-column { border-color: var(--line); background: #17221f; }
+
+.dark-mode .task-move, .dark-mode .setting-row, .dark-mode .trip-row, .dark-mode .empty-inline, .dark-mode .weather-details, .dark-mode .media-disclaimer { border-color: var(--line); }
+
+.dark-mode .task-move select { background: transparent; color: var(--teal-dark); }
+
+.dark-mode .device-option.chosen { background: #20382f; }
+
+.dark-mode .secondary-button { border-color: #42584f; background: #24362f; color: #b8d2c6; }
+
+.dark-mode .secondary-button:hover { background: #2b4138; }
+
+.dark-mode .mobile-nav { border-color: var(--line); background: rgb(27 41 37 / 97%); }
+
+.dark-mode .gps-security-notice { border-color: #695536; background: #342c1e; color: #e0c38e; }
+
+.dark-mode .gps-security-notice svg { color: #e0b866; }
+
+.dark-mode .footer-mark { background: #263a33; }
+
+.dark-mode .leaflet-tile-pane { filter: invert(.83) hue-rotate(165deg) brightness(.78) contrast(.9); }
+
+.dark-mode .leaflet-control-zoom a, .dark-mode .leaflet-control-attribution { border-color: var(--line) !important; background: var(--paper) !important; color: var(--ink-soft) !important; }
+
+.device-computer .page-content { width: min(1380px, 100%); padding-right: 52px; padding-left: 52px; }
+
+.device-computer .metric-grid { grid-template-columns: 1.1fr 1fr 1fr; }
+
+.device-computer .content-grid { grid-template-columns: .9fr 1.6fr; }
+
+.device-phone .page-content { max-width: 640px; padding: 24px 21px 18px; }
+
+.device-phone .topbar { padding-inline: 20px; }
+
+.device-phone .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.device-phone .metric-card:first-child { grid-column: 1 / -1; }
+
+.device-phone .content-grid { grid-template-columns: 1fr; }
+
+.device-phone .map-preview-art { height: 158px; }
+
+.device-phone .page-heading { align-items: flex-start; }
+
+.device-phone .page-heading h1 { font-size: 24px; }

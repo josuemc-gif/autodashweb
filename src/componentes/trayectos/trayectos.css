@@ -1,0 +1,23 @@
+.table-scroll { overflow-x: auto; }
+
+.empty-state { display: flex; min-height: 230px; flex-direction: column; align-items: center; justify-content: center; gap: 9px; color: var(--ink-faint); text-align: center; }
+
+.empty-state .empty-icon { width: 40px; height: 40px; }
+
+.empty-state > strong { color: var(--ink); font-family: var(--display); font-size: 13px; }
+
+.empty-state > span:not(.empty-icon) { max-width: 340px; font-size: 10px; }
+
+.history-summary { display: grid; grid-template-columns: 1fr 1fr 1.25fr; gap: 12px; margin-bottom: 13px; }
+
+.history-summary .panel { display: grid; gap: 8px; padding: 15px; }
+
+.history-summary .panel > strong { font-family: var(--display); font-size: 23px; font-weight: 650; font-variant-numeric: tabular-nums; }
+
+.history-summary .panel > strong small { color: var(--ink-faint); font-family: var(--sans); font-size: 12px; }
+
+.history-summary .history-unavailable { color: #a3815d; font-family: var(--sans); font-size: 12px; font-weight: 600; }
+
+.history-table { min-height: 300px; }
+
+.empty-state .secondary-button { margin-top: 5px; }

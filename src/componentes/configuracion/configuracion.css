@@ -1,0 +1,59 @@
+.accessibility-section { padding-bottom: 6px; }
+
+.setting-row { display: flex; align-items: center; gap: 11px; border-top: 1px solid #edf0ef; padding: 12px 0; }
+
+.setting-row:first-of-type { margin-top: 9px; }
+
+.setting-icon { display: grid; width: 31px; height: 31px; flex: 0 0 auto; place-items: center; border-radius: 5px; background: #f0f5f3; color: #63877c; }
+
+.setting-copy { display: grid; flex: 1; gap: 3px; }
+
+.setting-copy strong { font-size: 10px; }
+
+.setting-copy small { color: var(--ink-faint); font-size: 9px; }
+
+.toggle { display: flex; width: 34px; height: 19px; flex: 0 0 auto; align-items: center; border: 0; border-radius: 20px; background: #d5ddda; padding: 2px; cursor: pointer; transition: background .16s ease; }
+
+.toggle i { width: 15px; height: 15px; border-radius: 50%; background: white; box-shadow: 0 1px 2px rgb(0 0 0 / 17%); transition: transform .16s ease; }
+
+.voice-note, .bluetooth-note { display: flex; align-items: center; gap: 8px; margin: 0 0 10px 42px; border-radius: 4px; background: #eff6f3; padding: 8px 9px; color: #5f8277; font-size: 9px; }
+
+.bluetooth-note { margin: 12px 0 0; }
+
+.settings-link { width: 100%; margin-bottom: 14px; }
+
+.settings-section { margin-bottom: 13px; padding: 17px; }
+
+.settings-description { margin-top: 8px; color: var(--ink-faint); font-size: 10px; }
+
+.device-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+
+.device-option { display: flex; min-width: 0; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 5px; background: white; padding: 11px; text-align: left; cursor: pointer; }
+
+.device-option:hover { border-color: #bbd9d1; }
+
+.device-illustration { display: grid; width: 36px; height: 36px; flex: 0 0 auto; place-items: center; border: 1px solid #dce5e1; border-radius: 5px; background: #f7f9f8; color: #617f76; font-size: 19px; }
+
+.device-option > span:nth-child(2) { display: grid; min-width: 0; gap: 3px; flex: 1; }
+
+.device-option strong { font-size: 10px; }
+
+.device-option small { color: var(--ink-faint); font-size: 8px; line-height: 1.4; }
+
+.sensor-row { display: flex; align-items: center; gap: 10px; margin-top: 13px; border-top: 1px solid var(--line); padding-top: 13px; }
+
+.sensor-indicator { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; background: #bdc7c3; }
+
+.sensor-row > span:nth-child(2) { display: grid; flex: 1; gap: 4px; }
+
+.sensor-row strong { font-size: 10px; }
+
+.sensor-row small { color: var(--ink-faint); font-size: 9px; }
+
+.device-option.chosen { border-color: var(--teal); background: #f5faf8; box-shadow: inset 0 0 0 1px var(--teal); }
+
+.device-option.chosen .radio-indicator { border-color: var(--teal); background: var(--teal); }
+
+.toggle.on { background: var(--teal); }
+
+.toggle.on i { transform: translateX(15px); }

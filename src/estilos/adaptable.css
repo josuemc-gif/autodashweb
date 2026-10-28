@@ -1,0 +1,122 @@
+@media (min-width: 1450px) {
+  .page-content { padding-top: 41px; }
+  .metric-card { padding: 19px; }
+  .map-preview-art { height: 150px; }
+}
+
+@media (max-width: 1080px) {
+  .sidebar { width: 214px; }
+  .main-area { margin-left: 214px; }
+  .topbar { padding-inline: 25px; }
+  .page-content { padding: 29px 25px 21px; }
+  .app-footer { padding-inline: 25px; }
+  .metric-card { padding: 14px 13px 12px; }
+  .metric-label { font-size: 8px; }
+  .content-grid { grid-template-columns: 1fr 1.2fr; }
+  .app-footer > span:last-child { max-width: 52%; text-align: right; }
+}
+
+@media (max-width: 760px) {
+  .sidebar { width: 244px; transform: translateX(-100%); transition: transform .2s ease; }
+  .sidebar.sidebar-open { transform: translateX(0); }
+  .mobile-scrim { position: fixed; inset: 0; z-index: 25; display: block; border: 0; background: rgb(24 38 36 / 32%); }
+  .main-area { min-width: 0; margin-left: 0; padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
+  .topbar { height: 54px; gap: 10px; padding-inline: 13px; }
+  .menu-toggle { display: grid; flex: 0 0 auto; }
+  .breadcrumbs { min-width: 0; flex: 1; gap: 5px; overflow: hidden; font-size: 10px; white-space: nowrap; }
+  .topbar-actions { gap: 8px; }
+  .connection-pill { max-width: 114px; overflow: hidden; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+  .today-date { display: none; }
+  .notification-button { display: none; }
+  .page-content { padding: 23px 17px 20px; }
+  .page-heading { align-items: flex-start; flex-wrap: wrap; margin-bottom: 17px; }
+  .page-heading > div { min-width: 0; flex: 1 1 100%; }
+  .page-heading p { max-width: 350px; font-size: 11px; line-height: 1.5; }
+  h1 { font-size: 23px; }
+  .page-heading > .trip-button, .page-heading > .secondary-button { min-height: 33px; padding-inline: 9px; font-size: 9px; }
+  .metric-grid { gap: 9px; margin-bottom: 10px; }
+  .metric-card { padding: 13px 11px 11px; }
+  .metric-top { align-items: flex-start; }
+  .metric-label { max-width: 130px; font-size: 8px; line-height: 1.45; }
+  .metric-icon { width: 28px; height: 28px; }
+  .speed-display strong, .distance-display strong { font-size: 32px; }
+  .metric-foot { font-size: 8px; }
+  .metric-note { font-size: 8px; }
+  .content-grid { grid-template-columns: 1fr 1.1fr; gap: 9px; margin-bottom: 10px; }
+  .panel { padding: 13px; }
+  .weather-details span { font-size: 8px; }
+  .map-preview-art { height: 125px; }
+  .app-footer { padding: 11px 17px; font-size: 8px; }
+  .app-footer > span:last-child { max-width: 55%; line-height: 1.5; }
+  .mobile-nav { position: fixed; inset: auto 0 0; z-index: 22; display: grid; min-height: 59px; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--line); background: rgb(255 255 255 / 97%); padding: 4px 5px max(4px, env(safe-area-inset-bottom)); backdrop-filter: blur(12px); }
+  .mobile-nav button { display: grid; min-width: 0; min-height: 44px; align-content: center; justify-items: center; gap: 3px; border: 0; background: transparent; color: #82908d; cursor: pointer; }
+  .mobile-nav button span { max-width: 100%; overflow: hidden; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-nav button.active { color: var(--teal); }
+  .mobile-nav button.active span { font-weight: 700; }
+  .device-computer .page-content, .device-phone .page-content { padding-right: 17px; padding-left: 17px; }
+  .device-computer .topbar, .device-phone .topbar { padding-inline: 13px; }
+  .device-computer .content-grid { grid-template-columns: 1fr 1.1fr; }
+  .route-search { grid-template-columns: 1fr 18px 1.2fr; gap: 5px; padding: 9px; }
+  .destination-field { gap: 5px; }
+  .destination-field .trip-button { gap: 4px; padding-inline: 7px; }
+  .route-origin strong { font-size: 8px; }
+  .map-frame { height: 55vh; min-height: 330px; }
+  .kanban-board { gap: 7px; }
+  .kanban-column { padding: 8px; }
+  .task-card { padding: 8px; }
+  .device-options { gap: 7px; }
+  .device-option { gap: 7px; padding: 8px; }
+  .device-illustration { width: 29px; height: 31px; }
+  .device-option small { font-size: 7px; }
+}
+
+@media (max-width: 520px) {
+  .app-shell { min-width: 0; overflow-x: clip; }
+  .page-content { padding: 20px 13px 17px; }
+  .page-heading { gap: 8px; }
+  .page-heading > .trip-button, .page-heading > .secondary-button { align-self: flex-start; min-height: 40px; white-space: nowrap; }
+  .eyebrow { margin-bottom: 8px; font-size: 8px; }
+  h1 { font-size: 21px; }
+  .metric-grid { grid-template-columns: 1fr 1fr; }
+  .metric-card:first-child { grid-column: 1 / -1; }
+  .content-grid { grid-template-columns: 1fr; }
+  .weather-panel { display: grid; grid-template-columns: 1fr auto; column-gap: 8px; }
+  .weather-panel .section-title, .weather-panel .weather-status, .weather-panel .weather-details, .weather-panel .text-action { grid-column: 1 / -1; }
+  .weather-main { grid-column: 1; margin-block: 8px; }
+  .weather-symbol { width: 44px; height: 42px; }
+  .weather-panel .weather-title-icon { grid-column: 2; grid-row: 1; }
+  .map-preview-art { height: 154px; }
+  .map-frame { height: 58vh; min-height: 330px; }
+  .route-search { grid-template-columns: 1fr; gap: 8px; }
+  .route-divider { display: none; }
+  .destination-field { border-top: 1px solid var(--line); padding-top: 8px; }
+  .destination-field input { font-size: 10px; }
+  .route-error { right: 8px; left: 8px; max-width: none; }
+  .route-summary { right: 8px; bottom: 8px; left: 8px; justify-content: flex-start; gap: 7px; padding: 8px; }
+  .route-summary small { margin-left: auto; }
+  .route-destination-name { display: none; }
+  .route-arrival > small, .route-duration > small { font-size: 7px; }
+  .history-summary { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .history-summary .panel { padding: 12px; }
+  .history-summary .panel:last-child { grid-column: 1 / -1; }
+  .kanban-board { grid-template-columns: 1fr; gap: 9px; }
+  .kanban-column { min-height: 80px; }
+  .task-card { width: 100%; }
+  .media-layout { grid-template-columns: 1fr; }
+  .album-art { height: 165px; }
+  .playlist-panel { min-height: 0; }
+  .device-options { grid-template-columns: 1fr; }
+  .device-option { padding: 10px; }
+  .device-illustration { width: 36px; height: 36px; }
+  .device-option small { font-size: 9px; }
+  .sensor-row { flex-wrap: wrap; }
+  .sensor-row > .secondary-button { margin-left: auto; }
+  .app-footer { flex-direction: column; align-items: flex-start; padding-inline: 13px; }
+  .app-footer > span:first-child { font-size: 7px; }
+  .app-footer > span:last-child { max-width: none; font-size: 7px; line-height: 1.5; }
+  .trip-row { grid-template-columns: 29px minmax(0, 1fr) 56px; gap: 7px; }
+  .trip-consumption { display: none; }
+  .device-phone .content-grid { grid-template-columns: 1fr; }
+  .device-phone .metric-grid { grid-template-columns: 1fr 1fr; }
+  .device-phone .metric-card:first-child { grid-column: 1 / -1; }
+}

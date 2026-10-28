@@ -1,0 +1,71 @@
+.track-info { margin: 16px 0 12px; }
+
+.track-info h2 { margin-top: 6px; font-family: var(--display); font-size: 15px; }
+
+.track-info p { margin-top: 4px; color: var(--ink-faint); font-size: 10px; }
+
+.player-controls { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 9px; }
+
+.play-button { display: grid; width: 40px; height: 40px; place-items: center; border: 0; border-radius: 50%; background: var(--teal); color: white; cursor: pointer; }
+
+.volume-control { display: flex; align-items: center; gap: 9px; margin-top: 13px; color: var(--ink-faint); }
+
+.volume-control input { width: 100%; height: 3px; accent-color: var(--teal); }
+
+.playing-bars { display: flex; height: 12px; align-items: end; gap: 2px; }
+
+.playing-bars i { width: 2px; border-radius: 2px; background: white; animation: audio-bars .6s ease-in-out infinite alternate; }
+
+.playing-bars i:nth-child(1) { height: 55%; }
+
+.playing-bars i:nth-child(2) { height: 100%; animation-delay: .2s; }
+
+.playing-bars i:nth-child(3) { height: 70%; animation-delay: .35s; }
+
+@keyframes audio-bars { to { height: 30%; } }
+
+.media-layout { display: grid; grid-template-columns: minmax(260px, .9fr) minmax(300px, 1.1fr); align-items: start; gap: 13px; }
+
+.media-player { padding: 16px; }
+
+.album-art { position: relative; display: grid; height: 190px; overflow: hidden; place-items: center; border-radius: 4px; background: #dce8de; }
+
+.album-art::before { position: absolute; inset: 0; background-image: linear-gradient(135deg, transparent 48%, rgb(255 255 255 / 30%) 49%, rgb(255 255 255 / 30%) 50%, transparent 51%); background-size: 45px 45px; content: ''; }
+
+.album-sun { position: absolute; top: 23px; right: 29%; width: 66px; height: 66px; border-radius: 50%; background: #e9c992; }
+
+.album-horizon { position: absolute; right: -10%; bottom: -12px; left: -10%; height: 95px; border-radius: 50% 50% 0 0; background: #7a9d8c; transform: rotate(-6deg); }
+
+.album-horizon::after { position: absolute; top: 13px; right: -3%; left: -3%; height: 60px; border-radius: 50%; background: #638574; content: ''; transform: rotate(10deg); }
+
+.album-disc { z-index: 1; display: grid; width: 62px; height: 62px; place-items: center; border: 1px solid rgb(255 255 255 / 55%); border-radius: 50%; background: rgb(255 255 255 / 70%); color: var(--teal-dark); backdrop-filter: blur(5px); }
+
+.album-art > small { position: absolute; z-index: 2; bottom: 13px; left: 14px; color: white; font-size: 7px; font-weight: 700; text-shadow: 0 1px 3px rgb(0 0 0 / 25%); }
+
+.audio-progress { position: relative; height: 4px; border-radius: 5px; background: #e8eeeb; }
+
+.audio-progress span { display: block; width: 34%; height: 100%; border-radius: inherit; background: var(--teal); }
+
+.audio-progress i { position: absolute; top: -3px; left: calc(34% - 4px); width: 10px; height: 10px; border-radius: 50%; background: var(--teal); }
+
+.audio-times { display: flex; justify-content: space-between; margin-top: 6px; color: #a2acab; font-size: 8px; }
+
+.media-disclaimer { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; color: #9aa5a3; font-size: 9px; line-height: 1.5; }
+
+.playlist-panel { min-height: 310px; }
+
+.playlist-count { color: var(--ink-faint); font-size: 9px; }
+
+.playlist-item { display: flex; width: 100%; align-items: center; gap: 10px; margin-top: 6px; border: 1px solid transparent; border-radius: 4px; background: transparent; padding: 10px 8px; text-align: left; cursor: pointer; }
+
+.playlist-number { display: grid; width: 28px; height: 28px; flex: 0 0 auto; place-items: center; border-radius: 4px; background: #e9efec; color: #73847e; font-size: 9px; }
+
+.playlist-song { display: grid; flex: 1; gap: 3px; }
+
+.playlist-song strong { color: var(--ink); font-size: 10px; font-weight: 600; }
+
+.playlist-song small, .playlist-duration { color: var(--ink-faint); font-size: 9px; }
+
+.playlist-item:hover, .playlist-item.selected { border-color: #e2eeeb; background: #f4f8f6; }
+
+.playlist-item.selected .playlist-number { background: var(--teal); color: white; }

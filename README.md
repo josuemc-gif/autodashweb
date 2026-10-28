@@ -2,6 +2,17 @@
 
 Panel web para el seguimiento y cuidado de un carrito desde una tableta, teléfono o computadora.
 
+## Estructura del código
+
+- `src/aplicacion.jsx` coordina las vistas, el estado compartido y las preferencias.
+- `src/componentes/estructura` contiene la barra lateral y la barra superior.
+- `src/componentes/panel` contiene el panel principal y el botón reutilizable para iniciar o finalizar trayectos.
+- `src/componentes/navegacion` contiene la búsqueda de destinos y el mapa.
+- `src/componentes/trayectos`, `mantenimiento`, `multimedia` y `configuracion` contienen sus vistas y estilos.
+- `src/servicios` contiene el seguimiento GPS, la batería del teléfono y las consultas de clima y destinos.
+- `src/utilidades` contiene funciones reutilizables; `src/estilos` contiene estilos globales, temas y reglas adaptables.
+- `src/inicio.jsx` es el punto de entrada React.
+
 ## Desarrollo
 
 ```sh
