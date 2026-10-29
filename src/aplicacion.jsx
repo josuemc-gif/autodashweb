@@ -31,8 +31,6 @@ function Aplicacion() {
   const [view, setView] = useState('dashboard')
   const { bateria: phoneBattery, disponibilidad: batteryAvailability } = useBateriaTelefono()
   const [weather, setWeather] = useState(null)
-  const [playing, setPlaying] = useState(false)
-  const [track, setTrack] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
   const [clock, setClock] = useState(() => new Date())
   const {
@@ -150,7 +148,7 @@ function Aplicacion() {
 
           {view === 'history' && <SeccionTrayectos trips={trips} tripStarted={tripStarted} toggleTrip={toggleTrip} startGps={startGps} setView={setView} />}
           {view === 'maintenance' && <SeccionMantenimiento tasks={tasks} moveTask={moveTask} />}
-          {view === 'media' && <SeccionMultimedia track={track} setTrack={setTrack} playing={playing} setPlaying={setPlaying} />}
+          {view === 'media' && <SeccionMultimedia />}
           {view === 'settings' && (
             <SeccionConfiguracion
               device={device}
