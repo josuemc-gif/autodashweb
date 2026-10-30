@@ -327,14 +327,14 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
             <p className="youtube-status" role="status">Cargando reproductor de YouTube…</p>
           )}
           {youTubePlayerError && <p className="youtube-error" role="alert">{youTubePlayerError}</p>}
-          {youTubePlayerError && selectedYouTubeVideo && !isVideoPlayerLocked && (
+          {selectedYouTubeVideo && !isVideoPlayerLocked && (
             <a
               className="youtube-open-link"
               href={`https://www.youtube.com/watch?v=${encodeURIComponent(selectedYouTubeVideo.id)}`}
               target="_blank"
               rel="noopener noreferrer"
             >
-              Intentar abrir en YouTube
+              Abrir en YouTube
             </a>
           )}
           {isVideoPlayerLocked && (
