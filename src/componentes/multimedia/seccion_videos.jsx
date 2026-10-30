@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { LockKeyhole, Search, Video } from 'lucide-react'
 
 const youtubeApiKey = import.meta.env.VITE_YOUTUBE_API_KEY
+const youtubeIframeApiUrl = 'https://www.youtube.com/iframe_api'
+let youtubeIframeApiPromise
 
 const videoPlayerStyles = `
   .media-tools { display: grid; gap: 13px; margin-top: 13px; }
@@ -25,13 +27,10 @@ const videoPlayerStyles = `
   .youtube-result-copy strong { overflow: hidden; color: var(--ink); font-size: 12px; line-height: 1.4; text-overflow: ellipsis; }
   .youtube-result-copy small { overflow: hidden; color: var(--ink-faint); font-size: 10px; text-overflow: ellipsis; }
   .youtube-player-frame { position: relative; display: grid; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; place-items: center; border-radius: 5px; background: #111817; }
-  .youtube-player-preview { display: block; width: 100%; height: 100%; object-fit: cover; }
-  .youtube-player-caption { position: absolute; right: 0; bottom: 0; left: 0; background: linear-gradient(transparent, rgb(0 0 0 / 80%)); padding: 28px 12px 10px; color: white; font-size: 12px; }
+  .youtube-player-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
   .youtube-player-empty { display: grid; justify-items: center; gap: 10px; padding: 20px; color: #d3ddda; text-align: center; }
   .youtube-player-empty p { margin: 0; font-size: 13px; }
   .youtube-selected-title { margin: 10px 0 0; color: var(--ink); font-size: 13px; font-weight: 600; line-height: 1.5; }
-  .youtube-open-link { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; margin-top: 10px; border-radius: 5px; background: var(--teal); padding: 0 12px; color: white; font-size: 12px; font-weight: 600; text-decoration: none; }
-  .youtube-open-link:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
   .media-lock { display: flex; align-items: center; gap: 8px; background: #fff4e5; color: #765c37; }
   .youtube-search-button:focus-visible, .youtube-search-input:focus-visible, .youtube-result:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
   @media (max-width: 600px) {
@@ -42,6 +41,55 @@ const videoPlayerStyles = `
   }
 `
 
+function loadYouTubeIframeApi() {
+  if (window.YT?.Player) return Promise.resolve(window.YT)
+  if (youtubeIframeApiPromise) return youtubeIframeApiPromise
+
+  youtubeIframeApiPromise = new Promise((resolve, reject) => {
+    const script = document.querySelector(`script[src="${youtubeIframeApiUrl}"]`) || document.createElement('script')
+    const previousReady = window.onYouTubeIframeAPIReady
+    let timeout
+
+    const handleReady = () => {
+      window.onYouTubeIframeAPIReady = previousReady || null
+      window.clearTimeout(timeout)
+      resolve(window.YT)
+      if (typeof previousReady === 'function') previousReady()
+    }
+
+    window.onYouTubeIframeAPIReady = handleReady
+    timeout = window.setTimeout(() => {
+      window.onYouTubeIframeAPIReady = previousReady || null
+      youtubeIframeApiPromise = null
+      reject(new Error('No se pudo cargar el reproductor oficial de YouTube.'))
+    }, 15000)
+
+    script.addEventListener('error', () => {
+      window.clearTimeout(timeout)
+      window.onYouTubeIframeAPIReady = previousReady || null
+      youtubeIframeApiPromise = null
+      reject(new Error('No se pudo conectar con el reproductor de YouTube.'))
+    }, { once: true })
+
+    if (!script.parentNode) {
+      script.src = youtubeIframeApiUrl
+      script.async = true
+      document.head.appendChild(script)
+    }
+  })
+
+  return youtubeIframeApiPromise
+}
+
+function getYouTubePlayerErrorMessage(code) {
+  if (code === 2) return 'YouTube rechazó el identificador de este video.'
+  if (code === 5) return 'YouTube no pudo reproducir este video integrado. Prueba con otro resultado.'
+  if (code === 100) return 'Este video fue eliminado, es privado o no está disponible.'
+  if (code === 101 || code === 150) return 'El propietario no permite reproducir este video dentro de AutoDash. Prueba con otro resultado.'
+  if (code === 153) return 'YouTube no pudo verificar el origen de esta reproducción. Recarga AutoDash e inténtalo de nuevo.'
+  return 'YouTube no pudo reproducir este video dentro de AutoDash. Prueba con otro resultado.'
+}
+
 export function SeccionVideos({ isVideoPlayerLocked = false }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchRevision, setSearchRevision] = useState(0)
@@ -49,6 +97,16 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
   const [searchStatus, setSearchStatus] = useState('idle')
   const [searchError, setSearchError] = useState('')
   const [selectedYouTubeVideo, setSelectedYouTubeVideo] = useState(null)
+  const [youTubePlayerError, setYouTubePlayerError] = useState('')
+  const [youTubePlayerReady, setYouTubePlayerReady] = useState(false)
+  const youtubeFrameRef = useRef(null)
+  const youtubePlayerRef = useRef(null)
+  const securityLockRef = useRef(isVideoPlayerLocked)
+
+  useEffect(() => {
+    securityLockRef.current = isVideoPlayerLocked
+    if (isVideoPlayerLocked) youtubePlayerRef.current?.pauseVideo()
+  }, [isVideoPlayerLocked])
 
   useEffect(() => {
     const query = searchQuery.trim()
@@ -64,6 +122,8 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
           part: 'snippet',
           q: query,
           type: 'video',
+          videoEmbeddable: 'true',
+          videoSyndicated: 'true',
           maxResults: '10',
           key: youtubeApiKey,
         })
@@ -99,6 +159,47 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
     }
   }, [searchQuery, searchRevision, isVideoPlayerLocked])
 
+  useEffect(() => {
+    const videoId = selectedYouTubeVideo?.id
+    const iframe = youtubeFrameRef.current
+    if (!videoId || !iframe) return undefined
+
+    let cancelled = false
+    let playerInstance = null
+    setYouTubePlayerReady(false)
+    setYouTubePlayerError('')
+
+    loadYouTubeIframeApi()
+      .then((youtubeApi) => {
+        if (cancelled) return
+
+        const player = new youtubeApi.Player(iframe, {
+          events: {
+            onReady: (event) => {
+              if (cancelled) return
+              youtubePlayerRef.current = player
+              setYouTubePlayerReady(true)
+              if (securityLockRef.current) event.target.pauseVideo()
+            },
+            onError: (event) => {
+              if (cancelled) return
+              setYouTubePlayerError(getYouTubePlayerErrorMessage(event.data))
+            },
+          },
+        })
+        playerInstance = player
+        youtubePlayerRef.current = player
+      })
+      .catch((error) => {
+        if (!cancelled) setYouTubePlayerError(error.message)
+      })
+
+    return () => {
+      cancelled = true
+      if (youtubePlayerRef.current === playerInstance) youtubePlayerRef.current = null
+    }
+  }, [selectedYouTubeVideo?.id])
+
   const handleSearchSubmit = (event) => {
     event.preventDefault()
     if (isVideoPlayerLocked) return
@@ -118,6 +219,8 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
   const handleYouTubeSelection = (result) => {
     if (isVideoPlayerLocked) return
     setSelectedYouTubeVideo(result)
+    setYouTubePlayerError('')
+    setYouTubePlayerReady(false)
   }
 
   const missingApiKey = Boolean(searchQuery.trim()) && !youtubeApiKey && !isVideoPlayerLocked
@@ -170,7 +273,7 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
           )}
           {!isVideoPlayerLocked && searchStatus === 'waiting' && <p className="youtube-status" role="status">Esperando para buscar…</p>}
           {!isVideoPlayerLocked && searchStatus === 'loading' && <p className="youtube-status" role="status">Buscando videos…</p>}
-          {searchStatus === 'empty' && <p className="youtube-status" role="status">No se encontraron videos. Prueba otra búsqueda.</p>}
+          {searchStatus === 'empty' && <p className="youtube-status" role="status">No se encontraron videos que permitan reproducción integrada. Prueba otra búsqueda.</p>}
           {(searchStatus === 'error' || missingApiKey) && <p className="youtube-error" role="alert">{visibleSearchError}</p>}
 
           {searchResults.length > 0 && (
@@ -196,43 +299,35 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
 
         <article className="panel media-panel">
           <div className="media-panel-heading">
-            <span className="section-kicker">REPRODUCCIÓN EN YOUTUBE</span>
-            <h2>{selectedYouTubeVideo ? 'Video seleccionado' : 'Elige un video'}</h2>
+            <span className="section-kicker">REPRODUCTOR INTEGRADO</span>
+            <h2>{selectedYouTubeVideo ? 'YouTube' : 'Video seleccionado'}</h2>
           </div>
-          <div className="youtube-player-frame">
+          <div className="youtube-player-frame" aria-busy={Boolean(selectedYouTubeVideo) && !youTubePlayerReady}>
             {selectedYouTubeVideo ? (
-              selectedYouTubeVideo.thumbnail ? (
-                <>
-                  <img className="youtube-player-preview" src={selectedYouTubeVideo.thumbnail} alt="" />
-                  <span className="youtube-player-caption">El video se abrirá en YouTube.</span>
-                </>
-              ) : (
-                <div className="youtube-player-empty">
-                  <Video size={28} aria-hidden="true" />
-                  <p>Vista previa no disponible.</p>
-                </div>
-              )
+              <iframe
+                key={selectedYouTubeVideo.id}
+                ref={youtubeFrameRef}
+                title={selectedYouTubeVideo.title}
+                src={`https://www.youtube.com/embed/${encodeURIComponent(selectedYouTubeVideo.id)}?enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}&playsinline=1&rel=0`}
+                referrerPolicy="strict-origin-when-cross-origin"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
             ) : (
               <div className="youtube-player-empty">
                 <Video size={28} aria-hidden="true" />
-                <p>Busca y selecciona un video para abrirlo en YouTube.</p>
+                <p>Busca y selecciona un video para reproducirlo aquí.</p>
               </div>
             )}
           </div>
           {selectedYouTubeVideo && <p className="youtube-selected-title">{selectedYouTubeVideo.title}</p>}
-          {selectedYouTubeVideo && !isVideoPlayerLocked && (
-            <a
-              className="youtube-open-link"
-              href={`https://www.youtube.com/watch?v=${encodeURIComponent(selectedYouTubeVideo.id)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Reproducir en YouTube
-            </a>
+          {selectedYouTubeVideo && !youTubePlayerReady && !youTubePlayerError && (
+            <p className="youtube-status" role="status">Cargando reproductor de YouTube…</p>
           )}
+          {youTubePlayerError && <p className="youtube-error" role="alert">{youTubePlayerError}</p>}
           {isVideoPlayerLocked && (
             <p className="youtube-status" role="note">
-              La aplicación bloquea las búsquedas y selecciones de videos.
+              La aplicación bloquea las búsquedas y selecciones e intenta pausar el video; los controles internos del reproductor de YouTube pueden seguir disponibles.
             </p>
           )}
         </article>
