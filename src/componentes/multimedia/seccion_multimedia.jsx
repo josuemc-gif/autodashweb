@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Bluetooth, ExternalLink, FolderOpen, Music2, Pause, Play, Search, Square, Volume2 } from 'lucide-react'
+import { SeccionVideos } from './seccion_videos'
 import './multimedia.css'
 
 function formatTime(seconds) {
@@ -18,7 +19,7 @@ function getPlainText(value) {
   return new DOMParser().parseFromString(value, 'text/html').body.textContent.trim()
 }
 
-export function SeccionMultimedia() {
+export function SeccionMultimedia({ isVideoPlayerLocked = false }) {
   const audioRef = useRef(null)
   const fileInputRef = useRef(null)
   const searchControllerRef = useRef(null)
@@ -361,6 +362,8 @@ export function SeccionMultimedia() {
           </div>
         </article>
       </div>
+
+      <SeccionVideos isVideoPlayerLocked={isVideoPlayerLocked} />
     </section>
   )
 }
