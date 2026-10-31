@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { LockKeyhole, Search, Video } from 'lucide-react'
-import { getYouTubeVideoId } from '../../utilidades/youtube'
+import { getYouTubeEmbedUrl, getYouTubeVideoId } from '../../utilidades/youtube'
 
 const youtubeApiKey = import.meta.env.VITE_YOUTUBE_API_KEY
 const youtubeIframeApiUrl = 'https://www.youtube.com/iframe_api'
@@ -142,6 +142,7 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
   const [youTubePlayerError, setYouTubePlayerError] = useState('')
   const [youTubePlayerReady, setYouTubePlayerReady] = useState(false)
   const [youTubePlaybackState, setYouTubePlaybackState] = useState('loading')
+  const [useYouTubeEmbedFallback, setUseYouTubeEmbedFallback] = useState(false)
   const [playerRetryCount, setPlayerRetryCount] = useState(0)
   const youtubePlayerHostRef = useRef(null)
   const youtubePlayerRef = useRef(null)
@@ -222,6 +223,7 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
     setYouTubePlayerReady(false)
     setYouTubePlayerError('')
     setYouTubePlaybackState('loading')
+    setUseYouTubeEmbedFallback(false)
 
     loadYouTubeIframeApi()
       .then((youtubeApi) => {
@@ -265,14 +267,16 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
         youtubePlayerRef.current = player
         readyTimeout = window.setTimeout(() => {
           if (cancelled) return
-          setYouTubePlaybackState('error')
-          setYouTubePlayerError('YouTube no terminó de cargar el reproductor. Comprueba que tu navegador o red no bloquee youtube.com ni elimine el encabezado Referer (error 153), y vuelve a intentarlo.')
+          setYouTubePlayerError('')
+          setUseYouTubeEmbedFallback(true)
           if (youtubePlayerRef.current === playerInstance) youtubePlayerRef.current = null
           playerInstance?.destroy()
         }, 15000)
       })
-      .catch((error) => {
-        if (!cancelled) setYouTubePlayerError(error.message)
+      .catch(() => {
+        if (cancelled) return
+        setYouTubePlayerError('')
+        setUseYouTubeEmbedFallback(true)
       })
 
     return () => {
@@ -306,6 +310,7 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
     setYouTubePlayerError('')
     setYouTubePlayerReady(false)
     setYouTubePlaybackState('loading')
+    setUseYouTubeEmbedFallback(false)
     setPlayerRetryCount(0)
   }
 
@@ -313,7 +318,14 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
     setYouTubePlayerError('')
     setYouTubePlayerReady(false)
     setYouTubePlaybackState('loading')
+    setUseYouTubeEmbedFallback(false)
     setPlayerRetryCount((count) => count + 1)
+  }
+
+  const handleFallbackFrameLoad = () => {
+    setYouTubePlayerReady(true)
+    setYouTubePlaybackState('ready')
+    setYouTubePlayerError('')
   }
 
   const missingApiKey = Boolean(searchQuery.trim()) && !youtubeApiKey && !isVideoPlayerLocked
@@ -397,7 +409,23 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
           </div>
           <div className="youtube-player-frame" aria-busy={Boolean(selectedYouTubeVideo) && !youTubePlayerReady}>
             {selectedYouTubeVideo ? (
-              <div ref={youtubePlayerHostRef} />
+              useYouTubeEmbedFallback ? (
+                <iframe
+                  key={`${selectedYouTubeVideo.id}-${playerRetryCount}-fallback`}
+                  title={selectedYouTubeVideo.title}
+                  src={getYouTubeEmbedUrl(selectedYouTubeVideo.id, window.location.origin)}
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  onLoad={handleFallbackFrameLoad}
+                  onError={() => {
+                    setYouTubePlaybackState('error')
+                    setYouTubePlayerError('No se pudo cargar el video incrustado de YouTube. Comprueba tu conexión e inténtalo de nuevo.')
+                  }}
+                />
+              ) : (
+                <div ref={youtubePlayerHostRef} />
+              )
             ) : (
               <div className="youtube-player-empty">
                 <Video size={28} aria-hidden="true" />
@@ -407,9 +435,19 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
           </div>
           {selectedYouTubeVideo && <p className="youtube-selected-title">{selectedYouTubeVideo.title}</p>}
           {selectedYouTubeVideo && !youTubePlayerReady && !youTubePlayerError && (
-            <p className="youtube-status" role="status">Cargando reproductor de YouTube…</p>
+            <p className="youtube-status" role="status">
+              {useYouTubeEmbedFallback
+                ? 'La API de control no respondió; cargando el reproductor integrado de YouTube…'
+                : 'Cargando reproductor de YouTube…'}
+            </p>
           )}
-          {youTubePlaybackState === 'ready' && <p className="youtube-status" role="status">Video listo. Usa los controles para reproducirlo.</p>}
+          {youTubePlaybackState === 'ready' && (
+            <p className="youtube-status" role="status">
+              {useYouTubeEmbedFallback
+                ? 'Reproductor integrado cargado. Usa los controles para reproducirlo.'
+                : 'Video listo. Usa los controles para reproducirlo.'}
+            </p>
+          )}
           {youTubePlaybackState === 'playing' && <p className="youtube-status" role="status">Video reproduciéndose dentro de AutoDash.</p>}
           {youTubePlaybackState === 'paused' && <p className="youtube-status" role="status">Video en pausa.</p>}
           {youTubePlaybackState === 'ended' && <p className="youtube-status" role="status">El video terminó.</p>}
