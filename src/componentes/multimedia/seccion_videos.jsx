@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { LockKeyhole, Search, Video } from 'lucide-react'
-import { getYouTubeEmbedUrl, getYouTubeVideoId } from '../../utilidades/youtube'
+import { getYouTubeVideoId } from '../../utilidades/youtube'
 
 const youtubeApiKey = import.meta.env.VITE_YOUTUBE_API_KEY
 const youtubeIframeApiUrl = 'https://www.youtube.com/iframe_api'
@@ -28,6 +28,7 @@ const videoPlayerStyles = `
   .youtube-result-copy strong { overflow: hidden; color: var(--ink); font-size: 12px; line-height: 1.4; text-overflow: ellipsis; }
   .youtube-result-copy small { overflow: hidden; color: var(--ink-faint); font-size: 10px; text-overflow: ellipsis; }
   .youtube-player-frame { position: relative; display: grid; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; place-items: center; border-radius: 5px; background: #111817; }
+  .youtube-player-frame > div { width: 100%; height: 100%; }
   .youtube-player-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
   .youtube-player-empty { display: grid; justify-items: center; gap: 10px; padding: 20px; color: #d3ddda; text-align: center; }
   .youtube-player-empty p { margin: 0; font-size: 13px; }
@@ -142,7 +143,7 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
   const [youTubePlayerReady, setYouTubePlayerReady] = useState(false)
   const [youTubePlaybackState, setYouTubePlaybackState] = useState('loading')
   const [playerRetryCount, setPlayerRetryCount] = useState(0)
-  const youtubeFrameRef = useRef(null)
+  const youtubePlayerHostRef = useRef(null)
   const youtubePlayerRef = useRef(null)
   const securityLockRef = useRef(isVideoPlayerLocked)
 
@@ -209,11 +210,15 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
 
   useEffect(() => {
     const videoId = selectedYouTubeVideo?.id
-    const iframe = youtubeFrameRef.current
-    if (!videoId || !iframe) return undefined
+    const videoTitle = selectedYouTubeVideo?.title
+    const playerHost = youtubePlayerHostRef.current
+    if (!videoId || !playerHost) return undefined
 
     let cancelled = false
     let playerInstance = null
+    let readyTimeout
+    const playerMount = document.createElement('div')
+    playerHost.replaceChildren(playerMount)
     setYouTubePlayerReady(false)
     setYouTubePlayerError('')
     setYouTubePlaybackState('loading')
@@ -222,17 +227,29 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
       .then((youtubeApi) => {
         if (cancelled) return
 
-        const player = new youtubeApi.Player(iframe, {
+        const player = new youtubeApi.Player(playerMount, {
+          videoId,
+          playerVars: {
+            enablejsapi: 1,
+            origin: window.location.origin,
+            playsinline: 1,
+            rel: 0,
+          },
           events: {
             onReady: (event) => {
               if (cancelled) return
+              window.clearTimeout(readyTimeout)
               youtubePlayerRef.current = player
+              const iframe = event.target.getIframe()
+              iframe.title = videoTitle
+              iframe.referrerPolicy = 'strict-origin-when-cross-origin'
               setYouTubePlayerReady(true)
               setYouTubePlaybackState('ready')
               if (securityLockRef.current) event.target.pauseVideo()
             },
             onError: (event) => {
               if (cancelled) return
+              window.clearTimeout(readyTimeout)
               setYouTubePlaybackState('error')
               setYouTubePlayerError(getYouTubePlayerErrorMessage(event.data))
             },
@@ -246,6 +263,13 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
         })
         playerInstance = player
         youtubePlayerRef.current = player
+        readyTimeout = window.setTimeout(() => {
+          if (cancelled) return
+          setYouTubePlaybackState('error')
+          setYouTubePlayerError('YouTube no terminó de cargar el reproductor. Comprueba que tu navegador o red no bloquee youtube.com ni elimine el encabezado Referer (error 153), y vuelve a intentarlo.')
+          if (youtubePlayerRef.current === playerInstance) youtubePlayerRef.current = null
+          playerInstance?.destroy()
+        }, 15000)
       })
       .catch((error) => {
         if (!cancelled) setYouTubePlayerError(error.message)
@@ -253,10 +277,12 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
 
     return () => {
       cancelled = true
+      window.clearTimeout(readyTimeout)
       if (youtubePlayerRef.current === playerInstance) youtubePlayerRef.current = null
       playerInstance?.destroy()
+      playerHost.replaceChildren()
     }
-  }, [selectedYouTubeVideo?.id, playerRetryCount])
+  }, [selectedYouTubeVideo?.id, selectedYouTubeVideo?.title, playerRetryCount])
 
   const handleSearchSubmit = (event) => {
     event.preventDefault()
@@ -371,15 +397,7 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
           </div>
           <div className="youtube-player-frame" aria-busy={Boolean(selectedYouTubeVideo) && !youTubePlayerReady}>
             {selectedYouTubeVideo ? (
-              <iframe
-                  key={`${selectedYouTubeVideo.id}-${playerRetryCount}`}
-                ref={youtubeFrameRef}
-                title={selectedYouTubeVideo.title}
-                  src={getYouTubeEmbedUrl(selectedYouTubeVideo.id, window.location.origin)}
-                  referrerPolicy="origin"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
+              <div ref={youtubePlayerHostRef} />
             ) : (
               <div className="youtube-player-empty">
                 <Video size={28} aria-hidden="true" />
