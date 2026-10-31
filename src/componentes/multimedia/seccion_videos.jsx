@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { LockKeyhole, Search, Video } from 'lucide-react'
+import { getYouTubeEmbedUrl, getYouTubeVideoId } from '../../utilidades/youtube'
 
 const youtubeApiKey = import.meta.env.VITE_YOUTUBE_API_KEY
 const youtubeIframeApiUrl = 'https://www.youtube.com/iframe_api'
@@ -14,7 +15,7 @@ const videoPlayerStyles = `
   .youtube-search-form { display: flex; gap: 8px; }
   .youtube-search-input { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface, white); padding: 0 12px; color: var(--ink); font: inherit; font-size: 13px; }
   .youtube-search-button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 5px; background: var(--teal); padding: 0 15px; color: white; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
-  .youtube-search-button:disabled, .youtube-result:disabled { cursor: not-allowed; opacity: .55; }
+  .youtube-search-button:disabled, .youtube-result:disabled, .youtube-retry-button:disabled { cursor: not-allowed; opacity: .55; }
   .youtube-key-notice, .youtube-status, .youtube-error, .media-lock { margin: 10px 0 0; border-radius: 5px; padding: 10px 12px; font-size: 11px; line-height: 1.5; }
   .youtube-key-notice { background: #fff8ed; color: #765c37; }
   .youtube-status { color: var(--ink-faint); }
@@ -31,6 +32,8 @@ const videoPlayerStyles = `
   .youtube-player-empty { display: grid; justify-items: center; gap: 10px; padding: 20px; color: #d3ddda; text-align: center; }
   .youtube-player-empty p { margin: 0; font-size: 13px; }
   .youtube-selected-title { margin: 10px 0 0; color: var(--ink); font-size: 13px; font-weight: 600; line-height: 1.5; }
+  .youtube-retry-button { display: inline-flex; min-height: 38px; align-items: center; justify-content: center; margin-top: 8px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface, white); padding: 0 12px; color: var(--ink); font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; }
+  .youtube-retry-button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
   .media-lock { display: flex; align-items: center; gap: 8px; background: #fff4e5; color: #765c37; }
   .youtube-search-button:focus-visible, .youtube-search-input:focus-visible, .youtube-result:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
   @media (max-width: 600px) {
@@ -48,33 +51,53 @@ function loadYouTubeIframeApi() {
   youtubeIframeApiPromise = new Promise((resolve, reject) => {
     const script = document.querySelector(`script[src="${youtubeIframeApiUrl}"]`) || document.createElement('script')
     const previousReady = window.onYouTubeIframeAPIReady
+    let settled = false
     let timeout
 
     const handleReady = () => {
-      window.onYouTubeIframeAPIReady = previousReady || null
-      window.clearTimeout(timeout)
+      if (!window.YT?.Player || settled) return
+      settled = true
+      cleanup()
       resolve(window.YT)
       if (typeof previousReady === 'function') previousReady()
     }
 
-    window.onYouTubeIframeAPIReady = handleReady
-    timeout = window.setTimeout(() => {
-      window.onYouTubeIframeAPIReady = previousReady || null
-      youtubeIframeApiPromise = null
-      reject(new Error('No se pudo cargar el reproductor oficial de YouTube.'))
-    }, 15000)
-
-    script.addEventListener('error', () => {
+    const cleanup = () => {
       window.clearTimeout(timeout)
-      window.onYouTubeIframeAPIReady = previousReady || null
+      script.removeEventListener('load', handleLoad)
+      script.removeEventListener('error', handleError)
+      if (window.onYouTubeIframeAPIReady === handleReady) {
+        window.onYouTubeIframeAPIReady = previousReady || null
+      }
+    }
+
+    const handleLoad = () => handleReady()
+    const handleError = () => {
+      if (settled) return
+      settled = true
+      cleanup()
+      script.remove()
       youtubeIframeApiPromise = null
-      reject(new Error('No se pudo conectar con el reproductor de YouTube.'))
-    }, { once: true })
+      reject(new Error('No se pudo conectar con la API del reproductor de YouTube. Revisa tu conexión o bloqueo de red e inténtalo de nuevo.'))
+    }
+
+    window.onYouTubeIframeAPIReady = handleReady
+    script.addEventListener('load', handleLoad, { once: true })
+    script.addEventListener('error', handleError, { once: true })
+    timeout = window.setTimeout(() => {
+      if (settled) return
+      settled = true
+      cleanup()
+      youtubeIframeApiPromise = null
+      reject(new Error('La API del reproductor de YouTube tardó demasiado en responder. Revisa tu conexión e inténtalo de nuevo.'))
+    }, 15000)
 
     if (!script.parentNode) {
       script.src = youtubeIframeApiUrl
       script.async = true
       document.head.appendChild(script)
+    } else {
+      handleReady()
     }
   })
 
@@ -83,11 +106,29 @@ function loadYouTubeIframeApi() {
 
 function getYouTubePlayerErrorMessage(code) {
   if (code === 2) return 'YouTube rechazó el identificador de este video.'
-  if (code === 5) return 'YouTube no pudo reproducir este video integrado. Prueba con otro resultado.'
-  if (code === 100) return 'Este video fue eliminado, es privado o no está disponible.'
-  if (code === 101 || code === 150) return 'El propietario no permite reproducir este video dentro de AutoDash. Prueba con otro resultado.'
-  if (code === 153) return 'YouTube no pudo verificar el origen de esta reproducción. Recarga AutoDash e inténtalo de nuevo.'
-  return 'YouTube no pudo reproducir este video dentro de AutoDash. Prueba con otro resultado.'
+  if (code === 5) return 'YouTube no pudo decodificar este video. Prueba con otro resultado.'
+  if (code === 100) return 'Este video fue eliminado, es privado o no está disponible para inserción.'
+  if (code === 101 || code === 150) return 'El propietario no permite insertar este video. Prueba con otro resultado.'
+  if (code === 153) return 'YouTube no recibió la identificación del sitio necesaria. Comprueba el dominio, origin y la política de referencia del iframe.'
+  return 'YouTube no pudo cargar este video integrado. Comprueba tu conexión e inténtalo de nuevo.'
+}
+
+function getYouTubeSearchErrorMessage(data, status) {
+  const reason = data.error?.errors?.[0]?.reason
+  if (reason === 'quotaExceeded' || reason === 'dailyLimitExceeded') {
+    return 'Se agotó la cuota diaria de YouTube Data API. Inténtalo más tarde.'
+  }
+  if (reason === 'keyInvalid') {
+    return 'La clave de YouTube Data API no es válida. Revisa VITE_YOUTUBE_API_KEY.'
+  }
+  if (reason === 'ipRefererBlocked') {
+    return 'La clave de YouTube Data API no permite solicitudes desde este dominio. Revisa sus restricciones HTTP referrer en Google Cloud.'
+  }
+  if (reason === 'accessNotConfigured') {
+    return 'YouTube Data API v3 no está habilitada en el proyecto de Google Cloud de esta clave.'
+  }
+
+  return data.error?.message || `La búsqueda falló (HTTP ${status}).`
 }
 
 export function SeccionVideos({ isVideoPlayerLocked = false }) {
@@ -99,6 +140,8 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
   const [selectedYouTubeVideo, setSelectedYouTubeVideo] = useState(null)
   const [youTubePlayerError, setYouTubePlayerError] = useState('')
   const [youTubePlayerReady, setYouTubePlayerReady] = useState(false)
+  const [youTubePlaybackState, setYouTubePlaybackState] = useState('loading')
+  const [playerRetryCount, setPlayerRetryCount] = useState(0)
   const youtubeFrameRef = useRef(null)
   const youtubePlayerRef = useRef(null)
   const securityLockRef = useRef(isVideoPlayerLocked)
@@ -133,17 +176,22 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
         const data = await response.json()
 
         if (!response.ok) {
-          throw new Error(data.error?.message || `La búsqueda falló (HTTP ${response.status}).`)
+          throw new Error(getYouTubeSearchErrorMessage(data, response.status))
         }
 
         const results = (data.items || [])
-          .filter((item) => item.id?.videoId && item.snippet)
-          .map((item) => ({
-            id: item.id.videoId,
-            title: item.snippet.title,
-            channel: item.snippet.channelTitle,
-            thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
-          }))
+          .map((item) => {
+            const id = getYouTubeVideoId(item.id?.videoId)
+            if (!id || !item.snippet) return null
+
+            return {
+              id,
+              title: item.snippet.title,
+              channel: item.snippet.channelTitle,
+              thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
+            }
+          })
+          .filter(Boolean)
         setSearchResults(results)
         setSearchStatus(results.length ? 'success' : 'empty')
       } catch (error) {
@@ -168,6 +216,7 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
     let playerInstance = null
     setYouTubePlayerReady(false)
     setYouTubePlayerError('')
+    setYouTubePlaybackState('loading')
 
     loadYouTubeIframeApi()
       .then((youtubeApi) => {
@@ -179,11 +228,19 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
               if (cancelled) return
               youtubePlayerRef.current = player
               setYouTubePlayerReady(true)
+              setYouTubePlaybackState('ready')
               if (securityLockRef.current) event.target.pauseVideo()
             },
             onError: (event) => {
               if (cancelled) return
+              setYouTubePlaybackState('error')
               setYouTubePlayerError(getYouTubePlayerErrorMessage(event.data))
+            },
+            onStateChange: (event) => {
+              if (cancelled) return
+              if (event.data === youtubeApi.PlayerState.PLAYING) setYouTubePlaybackState('playing')
+              else if (event.data === youtubeApi.PlayerState.PAUSED) setYouTubePlaybackState('paused')
+              else if (event.data === youtubeApi.PlayerState.ENDED) setYouTubePlaybackState('ended')
             },
           },
         })
@@ -197,8 +254,9 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
     return () => {
       cancelled = true
       if (youtubePlayerRef.current === playerInstance) youtubePlayerRef.current = null
+      playerInstance?.destroy()
     }
-  }, [selectedYouTubeVideo?.id])
+  }, [selectedYouTubeVideo?.id, playerRetryCount])
 
   const handleSearchSubmit = (event) => {
     event.preventDefault()
@@ -221,6 +279,15 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
     setSelectedYouTubeVideo(result)
     setYouTubePlayerError('')
     setYouTubePlayerReady(false)
+    setYouTubePlaybackState('loading')
+    setPlayerRetryCount(0)
+  }
+
+  const handlePlayerRetry = () => {
+    setYouTubePlayerError('')
+    setYouTubePlayerReady(false)
+    setYouTubePlaybackState('loading')
+    setPlayerRetryCount((count) => count + 1)
   }
 
   const missingApiKey = Boolean(searchQuery.trim()) && !youtubeApiKey && !isVideoPlayerLocked
@@ -305,11 +372,11 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
           <div className="youtube-player-frame" aria-busy={Boolean(selectedYouTubeVideo) && !youTubePlayerReady}>
             {selectedYouTubeVideo ? (
               <iframe
-                key={selectedYouTubeVideo.id}
+                  key={`${selectedYouTubeVideo.id}-${playerRetryCount}`}
                 ref={youtubeFrameRef}
                 title={selectedYouTubeVideo.title}
-                src={`https://www.youtube.com/embed/${encodeURIComponent(selectedYouTubeVideo.id)}?enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}&playsinline=1&rel=0`}
-                referrerPolicy="strict-origin-when-cross-origin"
+                  src={getYouTubeEmbedUrl(selectedYouTubeVideo.id, window.location.origin)}
+                  referrerPolicy="origin"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
               />
@@ -324,7 +391,16 @@ export function SeccionVideos({ isVideoPlayerLocked = false }) {
           {selectedYouTubeVideo && !youTubePlayerReady && !youTubePlayerError && (
             <p className="youtube-status" role="status">Cargando reproductor de YouTube…</p>
           )}
+          {youTubePlaybackState === 'ready' && <p className="youtube-status" role="status">Video listo. Usa los controles para reproducirlo.</p>}
+          {youTubePlaybackState === 'playing' && <p className="youtube-status" role="status">Video reproduciéndose dentro de AutoDash.</p>}
+          {youTubePlaybackState === 'paused' && <p className="youtube-status" role="status">Video en pausa.</p>}
+          {youTubePlaybackState === 'ended' && <p className="youtube-status" role="status">El video terminó.</p>}
           {youTubePlayerError && <p className="youtube-error" role="alert">{youTubePlayerError}</p>}
+          {youTubePlayerError && selectedYouTubeVideo && !isVideoPlayerLocked && (
+            <button className="youtube-retry-button" type="button" onClick={handlePlayerRetry}>
+              Volver a intentar
+            </button>
+          )}
           {isVideoPlayerLocked && (
             <p className="youtube-status" role="note">
               La aplicación bloquea las búsquedas y selecciones e intenta pausar el video; los controles internos del reproductor de YouTube pueden seguir disponibles.
